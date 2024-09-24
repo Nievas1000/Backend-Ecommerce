@@ -1,4 +1,6 @@
 import db from '../utils/db.js'
+import { BrandModel } from './brand.js'
+import { CategoryModel } from './category.js'
 
 export class ProductModel {
   static async createProduct (product) {
@@ -40,46 +42,9 @@ export class ProductModel {
     }
   }
 
-  static async getCategory (id) {
-    try {
-      const [category] = await db.query('SELECT * FROM category WHERE id = ?', [id])
-
-      if (!category || category.length === 0) {
-        return []
-      }
-
-      return category[0]
-    } catch (error) {
-      console.log(error)
-      throw new Error('Failed to retrieve that category. Please try again later.')
-    }
-  }
-
-  static async saveCategory (title) {
-    try {
-      const [categoryExist] = await db.query('SELECT * FROM category WHERE title = ?', [title])
-
-      // Si la categoría existe, retornamos true
-      if (categoryExist && categoryExist.length > 0) {
-        throw new Error('Category already exist.')
-      }
-
-      const [result] = await db.query('INSERT INTO category (title) VALUES (?)', title)
-
-      if (result.affectedRows < 1) {
-        return []
-      }
-
-      return title
-    } catch (error) {
-      console.log(error)
-      throw new Error(error.message)
-    }
-  }
-
   static async getProductsByCategory (id) {
     try {
-      const category = await this.getCategory(id)
+      const category = await CategoryModel.getCategory(id)
 
       if (!category.id) {
         throw new Error('Category does not exist.')
@@ -98,46 +63,9 @@ export class ProductModel {
     }
   }
 
-  static async getBrand (id) {
-    try {
-      const [brand] = await db.query('SELECT * FROM brand WHERE id = ?', [id])
-
-      if (!brand || brand.length === 0) {
-        return []
-      }
-
-      return brand[0]
-    } catch (error) {
-      console.log(error)
-      throw new Error('Failed to retrieve that brand. Please try again later.')
-    }
-  }
-
-  static async saveBrand (title) {
-    try {
-      const [brandExist] = await db.query('SELECT * FROM brand WHERE title = ?', [title])
-
-      // Si la categoría existe, retornamos true
-      if (brandExist && brandExist.length > 0) {
-        throw new Error('Category already exist.')
-      }
-
-      const [result] = await db.query('INSERT INTO brand (title) VALUES (?)', title)
-
-      if (result.affectedRows < 1) {
-        return []
-      }
-
-      return title
-    } catch (error) {
-      console.log(error)
-      throw new Error(error.message)
-    }
-  }
-
   static async getProductsByBrand (id) {
     try {
-      const brand = await this.getBrand(id)
+      const brand = await BrandModel.getBrand(id)
 
       if (!brand.id) {
         throw new Error('Brand does not exist.')

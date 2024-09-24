@@ -75,29 +75,6 @@ export class ProductController {
     }
   }
 
-  static async saveCategory (req, res) {
-    try {
-      const { title } = req.body
-      const category = await ProductModel.saveCategory(title)
-
-      if (category.length === 0) {
-        return res.status(404).json({
-          message: 'It was not possible to save the category'
-        })
-      }
-
-      res.status(200).json({
-        message: 'Category saved successfully',
-        category
-      })
-    } catch (error) {
-      res.status(500).json({
-        message: 'An error occurred while saving the category',
-        error: error.message
-      })
-    }
-  }
-
   static async getProductsByBrand (req, res) {
     try {
       const { id } = req.params
@@ -116,29 +93,6 @@ export class ProductController {
     } catch (error) {
       res.status(500).json({
         message: 'An error occurred while retrieving the brand',
-        error: error.message
-      })
-    }
-  }
-
-  static async saveBrand (req, res) {
-    try {
-      const { title } = req.body
-      const brand = await ProductModel.saveBrand(title)
-
-      if (brand.length === 0) {
-        return res.status(404).json({
-          message: 'It was not possible to save the brand'
-        })
-      }
-
-      res.status(200).json({
-        message: 'Brand saved successfully',
-        brand
-      })
-    } catch (error) {
-      res.status(500).json({
-        message: 'An error occurred while saving the brand',
         error: error.message
       })
     }
