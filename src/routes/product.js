@@ -7,5 +7,6 @@ router.post('/', ProductController.createProduct)
 router.get('/:id', ProductController.getProduct)
 router.get('/category/:id', ProductController.getProductsByCategory)
 router.get('/brand/:id', ProductController.getProductsByBrand)
+router.put('/:id', ProductController.updateProduct)
 
 export default router

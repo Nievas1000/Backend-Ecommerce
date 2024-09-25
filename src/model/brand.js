@@ -1,4 +1,5 @@
 import db from '../utils/db.js'
+import { ProductModel } from '../model/product.js'
 
 export class BrandModel {
   static async getAllBrands () {
@@ -49,6 +50,27 @@ export class BrandModel {
     } catch (error) {
       console.log(error)
       throw new Error(error.message)
+    }
+  }
+
+  static async deleteBrand (id) {
+    try {
+      const products = await ProductModel.getProductsByBrand(id)
+
+      if (products.length > 0) {
+        throw new Error('Cannot delete brand. There are products associated with this brand.')
+      }
+
+      const [result] = await db.query('DELETE FROM brand WHERE id = ?', [id])
+
+      if (result.affectedRows === 0) {
+        throw new Error('Brand not found or already deleted.')
+      }
+
+      return true
+    } catch (error) {
+      console.error(error)
+      throw new Error(error.message || 'Failed to delete brand. Please try again later.')
     }
   }
 }

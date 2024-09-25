@@ -6,10 +6,10 @@ const newSchema = z.object({
   }).min(3, 'Title must be at least 3 characters long')
 })
 
-export const validateProduct = (product) => {
-  return newSchema.safeParse(product)
+export const validateCategory = (category) => {
+  return newSchema.safeParse(category)
 }
 
-export const validatePartialProduct = (product) => {
-  return newSchema.partial().safeParse(product)
+export const validatePartialCategory = (category) => {
+  return newSchema.partial().safeParse(category)
 }

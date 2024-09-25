@@ -15,7 +15,7 @@ export class ProductModel {
         throw new Error('A product with this title already exists.')
       }
 
-      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, quantity) VALUES (?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.quantity])
+      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, quantity) VALUES (?,?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.quantity, product.image_url])
 
       if (result.affectedRows < 1) {
         return []
@@ -39,6 +39,30 @@ export class ProductModel {
     } catch (error) {
       console.log(error)
       throw new Error('Failed to retrieve that product. Please try again later.')
+    }
+  }
+
+  static async updateProduct (id, product) {
+    try {
+      const updateFields = Object.keys(product)
+
+      const setClause = updateFields.map(field => `${field} = ?`).join(', ')
+
+      const values = Object.values(product)
+      values.push(id)
+
+      const query = `UPDATE product SET ${setClause} WHERE id = ?`
+
+      const [result] = await db.query(query, values)
+
+      if (!result.affectedRows || result.affectedRows === 0) {
+        throw new Error('Product not found or nothing to update')
+      }
+
+      return await this.getProduct(id)
+    } catch (error) {
+      console.log(error)
+      throw new Error(error.message)
     }
   }
 

@@ -1,5 +1,5 @@
 import { BrandModel } from '../model/brand.js'
-import { validateProduct } from '../schemas/category.js'
+import { validateBrand } from '../schemas/brand.js'
 
 export class BrandController {
   static async getAllBrands (req, res) {
@@ -49,7 +49,8 @@ export class BrandController {
 
   static async saveBrand (req, res) {
     try {
-      const result = validateProduct(req.body)
+      const result = validateBrand(req.body)
+
       if (!result.success) {
         return res.status(400).json({ error: JSON.parse(result.error.message) })
       }
@@ -69,6 +70,29 @@ export class BrandController {
     } catch (error) {
       res.status(500).json({
         message: 'An error occurred while saving the brand',
+        error: error.message
+      })
+    }
+  }
+
+  static async deleteBrand (req, res) {
+    try {
+      const { id } = req.params
+
+      const result = await BrandModel.deleteBrand(id)
+
+      if (!result) {
+        return res.status(404).json({
+          message: 'It was not possible to delete the brand'
+        })
+      }
+
+      res.status(200).json({
+        message: 'Brand deleted successfully'
+      })
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while deleting the brand',
         error: error.message
       })
     }
