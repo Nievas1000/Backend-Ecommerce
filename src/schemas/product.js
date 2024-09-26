@@ -8,14 +8,17 @@ const newSchema = z.object({
   description: z.string({
     required_error: 'Description is a required field.'
   }).min(10, 'Description must be at least 10 characters long'),
-  category_id: z.number().int().positive({
+  category_id: z.coerce.number().int().positive({
     message: 'Category ID must be a positive integer'
   }),
-  brand_id: z.number().int().positive({
+  brand_id: z.coerce.number().int().positive({
     message: 'Brand ID must be a positive integer'
   }),
-  quantity: z.number().int().nonnegative({
+  quantity: z.coerce.number().int().nonnegative({
     message: 'Quantity must be a non-negative integer'
+  }),
+  price: z.number().positive({
+    message: 'Price must be a positive number'
   })
 })
 

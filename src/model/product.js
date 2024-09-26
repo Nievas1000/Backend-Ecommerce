@@ -15,7 +15,7 @@ export class ProductModel {
         throw new Error('A product with this title already exists.')
       }
 
-      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, quantity) VALUES (?,?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.quantity, product.image_url])
+      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, quantity, image_url) VALUES (?,?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.quantity, product.image_url])
 
       if (result.affectedRows < 1) {
         return []
@@ -23,7 +23,7 @@ export class ProductModel {
       return product
     } catch (error) {
       console.log(error)
-      throw new Error(error)
+      throw new Error('Failed to save the product. Please try again later.')
     }
   }
 
@@ -105,6 +105,20 @@ export class ProductModel {
     } catch (error) {
       console.log(error)
       throw new Error(error.message)
+    }
+  }
+
+  static async updateImage (id, imageUrl) {
+    try {
+      const [result] = await db.query('UPDATE product SET image_url = ? WHERE id = ?', [imageUrl, id])
+
+      if (result.affectedRows === 0) {
+        return []
+      }
+
+      return await this.getProduct(id)
+    } catch (error) {
+      throw new Error('Failed to update product image.')
     }
   }
 }

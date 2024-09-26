@@ -1,11 +1,19 @@
 import express from 'express'
+import path from 'path'
 import productRouter from './routes/product.js'
 import categoryRouter from './routes/category.js'
 import brandRouter from './routes/brand.js'
 
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 const app = express()
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 app.use('/product', productRouter)
 app.use('/category', categoryRouter)

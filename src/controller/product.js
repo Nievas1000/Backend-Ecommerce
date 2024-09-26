@@ -1,48 +1,57 @@
 import { ProductModel } from '../model/product.js'
+import path from 'path'
+import fs from 'fs'
 import { validatePartialProduct, validateProduct } from '../schemas/product.js'
-import { upload } from '../utils/imageHelper.js'
+import { fileURLToPath } from 'url'
+
+export const __filename = fileURLToPath(import.meta.url)
+export const __customDirname = path.dirname(__filename)
 
 export class ProductController {
-  // TODO: Validaciones con zod, ya que con formdata recibimos todos strings
   static async createProduct (req, res) {
-    upload(req, res, async function (err) {
-      if (err) {
-        return res.status(400).json({ error: err.message })
+    try {
+      const result = validateProduct(req.body)
+
+      if (!result.success) {
+        return res.status(400).json({ error: JSON.parse(result.error.message) })
       }
 
-      try {
-        const result = validateProduct(req.body)
-        console.log(result)
+      const filename = Date.now() + '-' + req.file.originalname
 
-        if (!result.success) {
-          return res.status(400).json({ error: JSON.parse(result.error.message) })
-        }
+      const productData = {
+        ...result.data,
+        image_url: filename
+      }
 
-        const imageUrl = req.file ? `/uploads/${req.file.filename}` : null
-        const productData = {
-          ...result.data,
-          image_url: imageUrl
-        }
+      const product = await ProductModel.createProduct(productData)
 
-        const product = await ProductModel.createProduct(productData)
+      if (product.length === 0) {
+        return res.status(404).json({
+          message: 'It was not possible to save the product'
+        })
+      }
 
-        if (product.length === 0) {
-          return res.status(404).json({
-            message: 'It was not possible to save the product'
+      const filepath = path.join(__customDirname, '../uploads', filename)
+
+      fs.writeFile(filepath, req.file.buffer, (err) => {
+        if (err) {
+          return res.status(500).json({
+            message: 'Failed to save the image',
+            error: err.message
           })
         }
+      })
 
-        res.status(200).json({
-          message: 'Product saved successfully',
-          product
-        })
-      } catch (error) {
-        res.status(500).json({
-          message: 'An error occurred while saving the product',
-          error: error.message
-        })
-      }
-    })
+      res.status(200).json({
+        message: 'Product saved successfully',
+        product
+      })
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while saving the product',
+        error: error.message
+      })
+    }
   }
 
   static async getProduct (req, res) {
@@ -138,6 +147,68 @@ export class ProductController {
     } catch (error) {
       res.status(500).json({
         message: 'An error occurred while retrieving the brand',
+        error: error.message
+      })
+    }
+  }
+
+  static async updateProductImage (req, res) {
+    try {
+      const { id } = req.params
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: 'No image file provided'
+        })
+      }
+
+      const product = await ProductModel.getProduct(id)
+
+      if (product.length === 0) {
+        return res.status(404).json({
+          message: 'Product not found'
+        })
+      }
+
+      const oldImageUrl = product[0].image_url
+
+      if (oldImageUrl) {
+        const oldImagePath = path.join(__customDirname, '../uploads', oldImageUrl)
+        fs.unlink(oldImagePath, (err) => {
+          if (err) {
+            console.error(`Failed to delete old image: ${err.message}`)
+          }
+        })
+      }
+
+      const filename = Date.now() + '-' + req.file.originalname
+      const filepath = path.join(__customDirname, '../uploads', filename)
+
+      fs.writeFile(filepath, req.file.buffer, async (err) => {
+        if (err) {
+          return res.status(500).json({
+            message: 'Failed to save the image',
+            error: err.message
+          })
+        }
+
+        const imageUrl = filename
+        const updatedProduct = await ProductModel.updateImage(id, imageUrl)
+
+        if (updatedProduct.length === 0) {
+          return res.status(404).json({
+            message: 'Product not found or could not be updated'
+          })
+        }
+
+        res.status(200).json({
+          message: 'Product image updated successfully',
+          product: updatedProduct
+        })
+      })
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while updating the product image',
         error: error.message
       })
     }
