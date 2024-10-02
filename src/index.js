@@ -1,8 +1,10 @@
 import express from 'express'
 import path from 'path'
+import cookieParser from 'cookie-parser'
 import productRouter from './routes/product.js'
 import categoryRouter from './routes/category.js'
 import brandRouter from './routes/brand.js'
+import userRouter from './routes/user.js'
 
 import { fileURLToPath } from 'url'
 
@@ -13,11 +15,13 @@ const app = express()
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 app.use(express.json())
+app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
 
 app.use('/product', productRouter)
 app.use('/category', categoryRouter)
 app.use('/brand', brandRouter)
+app.use('/user', userRouter)
 
 app.listen(3000, () => {
   console.log('Server running on port 3000')

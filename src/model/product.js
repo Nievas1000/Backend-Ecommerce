@@ -121,4 +121,15 @@ export class ProductModel {
       throw new Error('Failed to update product image.')
     }
   }
+
+  static async searchProduct (query) {
+    try {
+      const [products] = await db.query('SELECT * FROM product WHERE title LIKE ? or description LIKE ?', [`%${query}%`, `%${query}%`])
+
+      return products
+    } catch (error) {
+      console.log(error)
+      throw new Error('Failed to search products')
+    }
+  }
 }

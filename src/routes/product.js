@@ -11,6 +11,7 @@ const upload = multer({
   limits: { fileSize: 1024 * 1024 * 5 }
 }).single('image')
 
+router.get('/search', ProductController.searchProduct)
 router.post('/', upload, ProductController.createProduct)
 router.get('/:id', ProductController.getProduct)
 router.get('/category/:id', ProductController.getProductsByCategory)

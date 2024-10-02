@@ -213,4 +213,27 @@ export class ProductController {
       })
     }
   }
+
+  static async searchProduct (req, res) {
+    try {
+      const { q } = req.query
+
+      if (!q) {
+        return res.status(400).json({ message: 'Search query is required' })
+      }
+
+      const products = await ProductModel.searchProduct(q)
+
+      if (products.length === 0) {
+        return res.status(404).json({ message: 'No products found matching the search query' })
+      }
+
+      res.status(200).json({
+        message: 'Products was retrieved successfully',
+        product: products
+      })
+    } catch (error) {
+      res.status(500).json({ message: 'An error occurred while searching for products' })
+    }
+  }
 }
