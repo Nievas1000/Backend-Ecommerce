@@ -1,8 +1,11 @@
-import { ProductModel } from '../model/product.js'
 import path from 'path'
 import fs from 'fs'
+import dotenv from 'dotenv'
+import jwt from 'jsonwebtoken'
+import { ProductModel } from '../model/product.js'
 import { validatePartialProduct, validateProduct } from '../schemas/product.js'
 import { fileURLToPath } from 'url'
+dotenv.config()
 
 export const __filename = fileURLToPath(import.meta.url)
 export const __customDirname = path.dirname(__filename)
@@ -103,6 +106,33 @@ export class ProductController {
         message: 'An error occurred while updating the product',
         error: error.message
       })
+    }
+  }
+
+  static async deleteProduct (req, res) {
+    try {
+      const token = req.cookies.session_token
+
+      if (!token) {
+        return res.status(400).json({ error: 'Access denied.' })
+      }
+
+      jwt.verify(token, process.env.JWT_SECRET)
+
+      const product = await ProductModel.getProduct(req.params.id)
+
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' })
+      }
+
+      await ProductModel.deleteProduct(req.params.id)
+
+      res.status(200).json({ message: 'Product deleted successfully' })
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Invalid or expired token' })
+      }
+      res.status(500).json({ message: 'An error occurred while deleting the product', error: error.message })
     }
   }
 

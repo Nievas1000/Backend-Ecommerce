@@ -18,5 +18,6 @@ router.get('/category/:id', ProductController.getProductsByCategory)
 router.get('/brand/:id', ProductController.getProductsByBrand)
 router.put('/:id', ProductController.updateProduct)
 router.put('/image/:id', upload, ProductController.updateProductImage)
+router.delete('/:id', ProductController.deleteProduct)
 
 export default router

@@ -77,6 +77,11 @@ export class CategoryController {
   static async deleteCategory (req, res) {
     try {
       const { id } = req.params
+      const token = req.cookies.session_token
+
+      if (!token) {
+        return res.status(400).json({ error: 'Access denied.' })
+      }
 
       const result = await CategoryModel.deleteCategory(id)
 

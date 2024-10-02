@@ -78,6 +78,11 @@ export class BrandController {
   static async deleteBrand (req, res) {
     try {
       const { id } = req.params
+      const token = req.cookies.session_token
+
+      if (!token) {
+        return res.status(400).json({ error: 'Access denied.' })
+      }
 
       const result = await BrandModel.deleteBrand(id)
 

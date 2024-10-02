@@ -66,6 +66,16 @@ export class ProductModel {
     }
   }
 
+  static async deleteProduct (id) {
+    try {
+      const [result] = await db.query('DELETE FROM product WHERE id = ?', [id])
+
+      return result.affectedRows > 0
+    } catch (error) {
+      throw new Error('Failed to delete product.')
+    }
+  }
+
   static async getProductsByCategory (id) {
     try {
       const category = await CategoryModel.getCategory(id)
