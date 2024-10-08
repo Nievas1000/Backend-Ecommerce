@@ -6,6 +6,7 @@ import categoryRouter from './routes/category.js'
 import brandRouter from './routes/brand.js'
 import userRouter from './routes/user.js'
 import inventoryRouter from './routes/inventory.js'
+import paymentRouter from './routes/payment.js'
 
 import { fileURLToPath } from 'url'
 
@@ -24,6 +25,7 @@ app.use('/category', categoryRouter)
 app.use('/brand', brandRouter)
 app.use('/user', userRouter)
 app.use('/inventory', inventoryRouter)
+app.use('/payment', paymentRouter)
 
 app.listen(3000, () => {
   console.log('Server running on port 3000')
