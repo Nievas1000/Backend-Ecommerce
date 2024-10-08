@@ -15,7 +15,7 @@ export class ProductModel {
         throw new Error('A product with this title already exists.')
       }
 
-      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, quantity, image_url) VALUES (?,?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.quantity, product.image_url])
+      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, image_url) VALUES (?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.image_url])
 
       if (result.affectedRows < 1) {
         return []
