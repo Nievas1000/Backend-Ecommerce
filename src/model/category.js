@@ -40,7 +40,7 @@ export class CategoryModel {
         throw new Error('Category already exist.')
       }
 
-      const [result] = await db.query('INSERT INTO category (title) VALUES (?)', title)
+      const [result] = await db.query('INSERT INTO category (title) VALUES (?)', [title])
 
       if (result.affectedRows < 1) {
         return []

@@ -89,9 +89,9 @@ export class ProductController {
         return res.status(400).json({ error: JSON.parse(result.error.message) })
       }
 
-      const news = await ProductModel.updateProduct(id, result.data)
+      const product = await ProductModel.updateProduct(id, result.data)
 
-      if (news.length === 0) {
+      if (product.length === 0) {
         return res.status(404).json({
           message: 'It was not possible to update the product'
         })
@@ -99,7 +99,7 @@ export class ProductController {
 
       res.status(200).json({
         message: 'Product updated successfully',
-        news
+        product
       })
     } catch (error) {
       res.status(500).json({
