@@ -1,6 +1,7 @@
 import db from '../utils/db.js'
 import { BrandModel } from './brand.js'
 import { CategoryModel } from './category.js'
+import { InventoryModel } from './inventory.js'
 
 export class ProductModel {
   static async createProduct (product) {
@@ -15,7 +16,7 @@ export class ProductModel {
         throw new Error('A product with this title already exists.')
       }
 
-      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, image_url) VALUES (?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.image_url])
+      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, image_url, price) VALUES (?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.image_url, product.price])
 
       if (result.affectedRows < 1) {
         return []
@@ -29,7 +30,12 @@ export class ProductModel {
 
   static async getProduct (id) {
     try {
-      const [product] = await db.query('SELECT * FROM product WHERE id = ?', [id])
+      const [product] = await db.query(`
+        SELECT p.*, i.stock
+        FROM product p
+        LEFT JOIN inventory i ON p.id = i.product_id
+        WHERE p.id = ?
+      `, [id])
 
       if (!product || product.length === 0) {
         return []
@@ -68,6 +74,12 @@ export class ProductModel {
 
   static async deleteProduct (id) {
     try {
+      const deleteInventoryResult = await InventoryModel.deleteInventory(id)
+
+      if (!deleteInventoryResult) {
+        throw new Error('Failed to delete inventory for the specified product')
+      }
+
       const [result] = await db.query('DELETE FROM product WHERE id = ?', [id])
 
       return result.affectedRows > 0
