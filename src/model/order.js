@@ -46,4 +46,104 @@ export class OrderModel {
       throw new Error('Failed to create order: ' + error.message)
     }
   }
+
+  static async getAllOrders () {
+    try {
+      const [orders] = await db.query(`
+        SELECT o.id AS order_id, o.user_email, o.total_price, o.status, o.payment_method_id, o.created_at,
+               oi.product_id, oi.quantity, oi.price,
+               s.address_line1, s.city, s.postal_code, s.country
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN shipping_addresses s ON o.id = s.order_id
+        ORDER BY o.created_at DESC
+      `)
+
+      return orders
+    } catch (error) {
+      console.log(error)
+      throw new Error('Failed to retrieve orders.')
+    }
+  }
+
+  static async getOrdersByEmail (userEmail) {
+    try {
+      const [orders] = await db.query(`
+        SELECT o.id AS order_id, o.user_email, o.total_price, o.status, o.payment_method_id, o.created_at,
+               oi.product_id, oi.quantity, oi.price,
+               s.address_line1, s.city, s.postal_code, s.country
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN shipping_addresses s ON o.id = s.order_id
+        WHERE o.user_email = ?
+        ORDER BY o.created_at DESC
+      `, [userEmail])
+
+      return orders
+    } catch (error) {
+      console.log(error)
+      throw new Error('Failed to retrieve orders by email.')
+    }
+  }
+
+  static async getOrderById (orderId) {
+    try {
+      const [order] = await db.query(`
+        SELECT o.id AS order_id, o.user_email, o.total_price, o.status, o.payment_method_id, o.created_at,
+               oi.product_id, oi.quantity, oi.price,
+               s.address_line1, s.city, s.postal_code, s.country
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN shipping_addresses s ON o.id = s.order_id
+        WHERE o.id = ?
+      `, [orderId])
+
+      if (order.length === 0) {
+        return null
+      }
+
+      return order
+    } catch (error) {
+      throw new Error('Failed to retrieve the order: ' + error.message)
+    }
+  }
+
+  static async updateOrder (id, order) {
+    try {
+      const updateFields = Object.keys(order)
+
+      const setClause = updateFields.map(field => `${field} = ?`).join(', ')
+
+      const values = Object.values(order)
+      values.push(id)
+
+      const query = `UPDATE orders SET ${setClause} WHERE id = ?`
+
+      const [result] = await db.query(query, values)
+
+      if (!result.affectedRows || result.affectedRows === 0) {
+        throw new Error('Order not found or nothing to update')
+      }
+
+      return await this.getOrderById(id)
+    } catch (error) {
+      console.log(error)
+      throw new Error(error.message)
+    }
+  }
+
+  static async deleteOrder (orderId) {
+    try {
+      await db.query('DELETE FROM order_items WHERE order_id = ?', [orderId])
+
+      await db.query('DELETE FROM shipping_addresses WHERE order_id = ?', [orderId])
+
+      const [result] = await db.query('DELETE FROM orders WHERE id = ?', [orderId])
+
+      return result.affectedRows > 0
+    } catch (error) {
+      console.log(error)
+      throw new Error('Failed to delete order.')
+    }
+  }
 }

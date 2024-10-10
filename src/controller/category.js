@@ -2,11 +2,11 @@ import { CategoryModel } from '../model/category.js'
 import { validateCategory } from '../schemas/category.js'
 
 export class CategoryController {
-  static async getAllBrands (req, res) {
+  static async getAllCategories (req, res) {
     try {
-      const brands = await CategoryModel.getAllCategories()
+      const categories = await CategoryModel.getAllCategories()
 
-      if (brands.length === 0) {
+      if (categories.length === 0) {
         return res.status(404).json({
           message: 'No categories available'
         })
@@ -14,7 +14,7 @@ export class CategoryController {
 
       res.status(200).json({
         message: 'Categories retrieved successfully',
-        brands
+        categories
       })
     } catch (error) {
       res.status(500).json({
