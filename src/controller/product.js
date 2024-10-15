@@ -25,7 +25,6 @@ export class ProductController {
         ...result.data,
         image_url: filename
       }
-
       const product = await ProductModel.createProduct(productData)
 
       if (product.length === 0) {

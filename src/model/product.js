@@ -16,11 +16,14 @@ export class ProductModel {
         throw new Error('A product with this title already exists.')
       }
 
-      const [result] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, image_url, price) VALUES (?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.image_url, product.price])
+      const [resultProduct] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, image_url, price) VALUES (?,?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.image_url, product.price])
 
-      if (result.affectedRows < 1) {
+      const resultInventory = await InventoryModel.createInventory({ product_id: resultProduct.insertId, stock: product.quantity })
+
+      if (resultProduct.affectedRows < 1 && resultInventory) {
         return []
       }
+
       return product
     } catch (error) {
       console.log(error)

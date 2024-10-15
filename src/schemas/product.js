@@ -14,8 +14,11 @@ const newSchema = z.object({
   brand_id: z.coerce.number().int().positive({
     message: 'Brand ID must be a positive integer'
   }),
-  price: z.number().positive({
+  price: z.coerce.number().positive({
     message: 'Price must be a positive number'
+  }),
+  quantity: z.coerce.number().positive({
+    message: 'Quantity must be a positive number'
   })
 })
 
