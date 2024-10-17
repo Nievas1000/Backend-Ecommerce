@@ -1,6 +1,7 @@
 import express from 'express'
 import path from 'path'
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
 import productRouter from './routes/product.js'
 import categoryRouter from './routes/category.js'
 import brandRouter from './routes/brand.js'
@@ -21,6 +22,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
+app.use(cors())
 
 app.use('/product', productRouter)
 app.use('/category', categoryRouter)
