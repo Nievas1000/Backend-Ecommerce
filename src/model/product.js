@@ -4,34 +4,53 @@ import { CategoryModel } from './category.js'
 import { InventoryModel } from './inventory.js'
 
 export class ProductModel {
-  static async createProduct (product) {
+  static async createProduct(product) {
     try {
+      // Verificar si el SKU ya existe
       const [existingSku] = await db.query('SELECT sku FROM product WHERE sku = ?', [product.sku])
       if (existingSku.length > 0) {
         throw new Error('A product with this SKU already exists.')
       }
 
+      // Verificar si el título ya existe
       const [existingTitle] = await db.query('SELECT title FROM product WHERE title = ?', [product.title])
       if (existingTitle.length > 0) {
         throw new Error('A product with this title already exists.')
       }
 
-      const [resultProduct] = await db.query('INSERT INTO product (sku, title, description, category_id, brand_id, image_url, price) VALUES (?,?,?,?,?,?,?)', [product.sku, product.title, product.description, product.category_id, product.brand_id, product.image_url, product.price])
+      // Insertar el producto en la base de datos
+      const [resultProduct] = await db.query(
+        'INSERT INTO product (sku, title, description, category_id, brand_id, price) VALUES (?,?,?,?,?,?)',
+        [product.sku, product.title, product.description, product.category_id, product.brand_id, product.price]
+      )
 
-      const resultInventory = await InventoryModel.createInventory({ product_id: resultProduct.insertId, stock: product.quantity })
+      const productId = resultProduct.insertId
 
-      if (resultProduct.affectedRows < 1 && resultInventory) {
+      // Insertar las imágenes en la tabla product_images
+      const imageInsertPromises = product.images.map((image) => {
+        return db.query('INSERT INTO product_images (product_id, image_url) VALUES (?, ?)', [productId, image])
+      })
+
+      await Promise.all(imageInsertPromises)
+
+      // Crear el inventario asociado al producto
+      const resultInventory = await InventoryModel.createInventory({
+        product_id: productId,
+        stock: product.quantity
+      })
+
+      if (resultProduct.affectedRows < 1 || !resultInventory) {
         return []
       }
 
-      return product
+      return { productId, ...product }
     } catch (error) {
       console.log(error)
       throw new Error('Failed to save the product. Please try again later.')
     }
   }
 
-  static async getProduct (id) {
+  static async getProduct(id) {
     try {
       const [product] = await db.query(`
         SELECT p.*, i.stock
@@ -51,7 +70,7 @@ export class ProductModel {
     }
   }
 
-  static async updateProduct (id, product) {
+  static async updateProduct(id, product) {
     try {
       const updateFields = Object.keys(product)
 
@@ -75,7 +94,7 @@ export class ProductModel {
     }
   }
 
-  static async deleteProduct (id) {
+  static async deleteProduct(id) {
     try {
       const deleteInventoryResult = await InventoryModel.deleteInventory(id)
 
@@ -91,7 +110,7 @@ export class ProductModel {
     }
   }
 
-  static async getProductsByCategory (id) {
+  static async getProductsByCategory(id) {
     try {
       const category = await CategoryModel.getCategory(id)
 
@@ -112,7 +131,7 @@ export class ProductModel {
     }
   }
 
-  static async getProductsByBrand (id) {
+  static async getProductsByBrand(id) {
     try {
       const brand = await BrandModel.getBrand(id)
 
@@ -133,7 +152,7 @@ export class ProductModel {
     }
   }
 
-  static async updateImage (id, imageUrl) {
+  static async updateImage(id, imageUrl) {
     try {
       const [result] = await db.query('UPDATE product SET image_url = ? WHERE id = ?', [imageUrl, id])
 
@@ -147,7 +166,7 @@ export class ProductModel {
     }
   }
 
-  static async searchProduct (query) {
+  static async searchProduct(query) {
     try {
       const [products] = await db.query('SELECT * FROM product WHERE title LIKE ? or description LIKE ?', [`%${query}%`, `%${query}%`])
 

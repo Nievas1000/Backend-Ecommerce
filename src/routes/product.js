@@ -8,11 +8,15 @@ const storage = multer.memoryStorage()
 
 const upload = multer({
   storage,
-  limits: { fileSize: 1024 * 1024 * 5 }
-}).single('image')
+  limits: {
+    fileSize: 1024 * 1024 * 5, // Límite de 5 MB por archivo
+    fieldSize: 1024 * 1024 * 20, // Límite total de 20 MB para el campo `images`
+    files: 10
+  }
+}).array('images', 6)
 
-router.get('/search', ProductController.searchProduct)
 router.post('/', upload, ProductController.createProduct)
+router.get('/search', ProductController.searchProduct)
 router.get('/:id', ProductController.getProduct)
 router.get('/category/:id', ProductController.getProductsByCategory)
 router.get('/brand/:id', ProductController.getProductsByBrand)

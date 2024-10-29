@@ -5,13 +5,15 @@ import jwt from 'jsonwebtoken'
 import { ProductModel } from '../model/product.js'
 import { validatePartialProduct, validateProduct } from '../schemas/product.js'
 import { fileURLToPath } from 'url'
+import { promisify } from 'util'
+const writeFileAsync = promisify(fs.writeFile)
 dotenv.config()
 
 export const __filename = fileURLToPath(import.meta.url)
 export const __customDirname = path.dirname(__filename)
 
 export class ProductController {
-  static async createProduct (req, res) {
+  static async createProduct(req, res) {
     try {
       const result = validateProduct(req.body)
 
@@ -19,12 +21,12 @@ export class ProductController {
         return res.status(400).json({ error: JSON.parse(result.error.message) })
       }
 
-      const filename = Date.now() + '-' + req.file.originalname
-
+      const filenames = req.files.map((file) => Date.now() + '-' + file.originalname)
       const productData = {
         ...result.data,
-        image_url: filename
+        images: filenames
       }
+
       const product = await ProductModel.createProduct(productData)
 
       if (product.length === 0) {
@@ -33,19 +35,15 @@ export class ProductController {
         })
       }
 
-      const filepath = path.join(__customDirname, '../uploads', filename)
-
-      fs.writeFile(filepath, req.file.buffer, (err) => {
-        if (err) {
-          return res.status(500).json({
-            message: 'Failed to save the image',
-            error: err.message
-          })
-        }
+      const imageSavePromises = req.files.map((file, index) => {
+        const filepath = path.join(__customDirname, '../uploads', filenames[index])
+        return writeFileAsync(filepath, file.buffer)
       })
 
+      await Promise.all(imageSavePromises)
+
       res.status(200).json({
-        message: 'Product saved successfully',
+        message: 'Product saved successfully with images',
         product
       })
     } catch (error) {
@@ -56,7 +54,7 @@ export class ProductController {
     }
   }
 
-  static async getProduct (req, res) {
+  static async getProduct(req, res) {
     try {
       const { id } = req.params
       const product = await ProductModel.getProduct(id)
@@ -79,7 +77,7 @@ export class ProductController {
     }
   }
 
-  static async updateProduct (req, res) {
+  static async updateProduct(req, res) {
     try {
       const { id } = req.params
       const result = validatePartialProduct(req.body)
@@ -108,7 +106,7 @@ export class ProductController {
     }
   }
 
-  static async deleteProduct (req, res) {
+  static async deleteProduct(req, res) {
     try {
       const token = req.cookies.session_token
 
@@ -135,7 +133,7 @@ export class ProductController {
     }
   }
 
-  static async getProductsByCategory (req, res) {
+  static async getProductsByCategory(req, res) {
     try {
       const { id } = req.params
       const products = await ProductModel.getProductsByCategory(id)
@@ -158,7 +156,7 @@ export class ProductController {
     }
   }
 
-  static async getProductsByBrand (req, res) {
+  static async getProductsByBrand(req, res) {
     try {
       const { id } = req.params
       const products = await ProductModel.getProductsByBrand(id)
@@ -181,7 +179,7 @@ export class ProductController {
     }
   }
 
-  static async updateProductImage (req, res) {
+  static async updateProductImage(req, res) {
     try {
       const { id } = req.params
 
@@ -243,7 +241,7 @@ export class ProductController {
     }
   }
 
-  static async searchProduct (req, res) {
+  static async searchProduct(req, res) {
     try {
       const { q } = req.query
 

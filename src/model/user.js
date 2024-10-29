@@ -1,7 +1,7 @@
 import db from '../utils/db.js'
 
 export class UserModel {
-  static async getUserByEmail (email) {
+  static async getUserByEmail(email) {
     try {
       const [user] = await db.query('SELECT * FROM users WHERE email = ?', [email])
       return user.length > 0 ? user[0] : null
@@ -11,7 +11,7 @@ export class UserModel {
     }
   }
 
-  static async getUserById (id) {
+  static async getUserById(id) {
     try {
       const [user] = await db.query('SELECT * FROM users WHERE id = ?', [id])
       return user.length > 0 ? user[0] : null
@@ -20,7 +20,7 @@ export class UserModel {
     }
   }
 
-  static async getAllUsers () {
+  static async getAllUsers() {
     try {
       const [users] = await db.query('SELECT id, name, email, created_at FROM users')
 
@@ -31,7 +31,7 @@ export class UserModel {
     }
   }
 
-  static async createUser (user) {
+  static async createUser(user) {
     try {
       const { name, email, password } = user
 
@@ -55,7 +55,7 @@ export class UserModel {
     }
   }
 
-  static async getUser (id) {
+  static async getUser(id) {
     try {
       const [user] = await db.query('SELECT * FROM users WHERE id = ?', [id])
 
@@ -66,7 +66,7 @@ export class UserModel {
     }
   }
 
-  static async deleteUser (id) {
+  static async deleteUser(id) {
     try {
       const [result] = await db.query('DELETE FROM users WHERE id = ?', [id])
 
@@ -77,7 +77,7 @@ export class UserModel {
     }
   }
 
-  static async updatePassword (id, newPassword) {
+  static async updatePassword(id, newPassword) {
     try {
       await db.query('UPDATE users SET password = ? WHERE id = ?', [newPassword, id])
     } catch (error) {
