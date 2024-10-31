@@ -1,7 +1,7 @@
 import db from '../utils/db.js'
 
 export class InventoryModel {
-  static async getInventoryByProduct (productId) {
+  static async getInventoryByProduct(productId) {
     try {
       const [inventory] = await db.query('SELECT * FROM inventory WHERE product_id = ?', [productId])
 
@@ -11,7 +11,7 @@ export class InventoryModel {
     }
   }
 
-  static async createInventory (inventory) {
+  static async createInventory(inventory) {
     try {
       const inventoryExist = await this.getInventoryByProduct(inventory.product_id)
 
@@ -19,7 +19,7 @@ export class InventoryModel {
         throw new Error('Inventory already exist.')
       }
 
-      const [result] = await db.query('INSERT INTO inventory (product_id, stock) VALUES (?,?)', [inventory.product_id, inventory.stock])
+      const [result] = await db.query('INSERT INTO inventory (product_id, stock, size_id) VALUES (?,?,?)', [inventory.product_id, inventory.stock, inventory.size_id])
 
       if (result.affectedRows < 1) {
         return []
@@ -32,7 +32,7 @@ export class InventoryModel {
     }
   }
 
-  static async getAllInventory () {
+  static async getAllInventory() {
     try {
       const [inventory] = await db.query('SELECT * FROM inventory')
 
@@ -42,7 +42,7 @@ export class InventoryModel {
     }
   }
 
-  static async updateStock (productId, stock) {
+  static async updateStock(productId, stock) {
     try {
       const [result] = await db.query('UPDATE inventory SET stock = ? WHERE product_id = ?', [stock, productId])
 
@@ -53,7 +53,7 @@ export class InventoryModel {
     }
   }
 
-  static async deleteInventory (productId) {
+  static async deleteInventory(productId) {
     try {
       const [result] = await db.query('DELETE FROM inventory WHERE product_id = ?', [productId])
 
@@ -61,6 +61,21 @@ export class InventoryModel {
     } catch (error) {
       console.log(error)
       throw new Error('Failed to delete inventory.')
+    }
+  }
+
+  static async getSizes() {
+    try {
+      const [sizes] = await db.query('SELECT * FROM sizes')
+
+      if (!sizes || sizes.length === 0) {
+        return []
+      }
+
+      return sizes
+    } catch (error) {
+      console.log(error)
+      throw new Error(error.message)
     }
   }
 }

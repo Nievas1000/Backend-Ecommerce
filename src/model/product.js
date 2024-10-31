@@ -6,19 +6,16 @@ import { InventoryModel } from './inventory.js'
 export class ProductModel {
   static async createProduct(product) {
     try {
-      // Verificar si el SKU ya existe
       const [existingSku] = await db.query('SELECT sku FROM product WHERE sku = ?', [product.sku])
       if (existingSku.length > 0) {
         throw new Error('A product with this SKU already exists.')
       }
 
-      // Verificar si el título ya existe
       const [existingTitle] = await db.query('SELECT title FROM product WHERE title = ?', [product.title])
       if (existingTitle.length > 0) {
         throw new Error('A product with this title already exists.')
       }
 
-      // Insertar el producto en la base de datos
       const [resultProduct] = await db.query(
         'INSERT INTO product (sku, title, description, category_id, brand_id, price) VALUES (?,?,?,?,?,?)',
         [product.sku, product.title, product.description, product.category_id, product.brand_id, product.price]
@@ -26,16 +23,15 @@ export class ProductModel {
 
       const productId = resultProduct.insertId
 
-      // Insertar las imágenes en la tabla product_images
       const imageInsertPromises = product.images.map((image) => {
         return db.query('INSERT INTO product_images (product_id, image_url) VALUES (?, ?)', [productId, image])
       })
 
       await Promise.all(imageInsertPromises)
 
-      // Crear el inventario asociado al producto
       const resultInventory = await InventoryModel.createInventory({
         product_id: productId,
+        size_id: product.size_id,
         stock: product.quantity
       })
 

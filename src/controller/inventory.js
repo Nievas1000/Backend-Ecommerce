@@ -2,7 +2,7 @@ import { InventoryModel } from '../model/inventory.js'
 import { validateInventory, validatePartialInventory } from '../schemas/inventory.js'
 
 export class InventoryController {
-  static async createInventory (req, res) {
+  static async createInventory(req, res) {
     try {
       const result = validateInventory(req.body)
 
@@ -30,7 +30,7 @@ export class InventoryController {
     }
   }
 
-  static async getAllInventory (req, res) {
+  static async getAllInventory(req, res) {
     try {
       const inventory = await InventoryModel.getAllInventory()
 
@@ -50,7 +50,7 @@ export class InventoryController {
     }
   }
 
-  static async getInventoryByProduct (req, res) {
+  static async getInventoryByProduct(req, res) {
     try {
       const { id } = req.params
 
@@ -72,7 +72,7 @@ export class InventoryController {
     }
   }
 
-  static async updateStock (req, res) {
+  static async updateStock(req, res) {
     try {
       const { id } = req.params
       const result = validatePartialInventory(req.body)
@@ -90,6 +90,28 @@ export class InventoryController {
       res.status(200).json({ message: 'Stock updated successfully' })
     } catch (error) {
       res.status(500).json({ message: 'An error occurred while updating the stock', error: error.message })
+    }
+  }
+
+  static async getSizes(req, res) {
+    try {
+      const sizes = await InventoryModel.getSizes()
+
+      if (sizes.length === 0) {
+        return res.status(404).json({
+          message: 'No sizes available'
+        })
+      }
+
+      res.status(200).json({
+        message: 'Sizes retrieved successfully',
+        data: sizes
+      })
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while retrieving the sizes',
+        error: error.message
+      })
     }
   }
 }
