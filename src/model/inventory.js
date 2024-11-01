@@ -42,9 +42,9 @@ export class InventoryModel {
     }
   }
 
-  static async updateStock(productId, stock) {
+  static async updateStock(id, stock) {
     try {
-      const [result] = await db.query('UPDATE inventory SET stock = ? WHERE product_id = ?', [stock, productId])
+      const [result] = await db.query('UPDATE inventory SET stock = ? WHERE id = ?', [stock, id])
 
       return result.affectedRows > 0
     } catch (error) {

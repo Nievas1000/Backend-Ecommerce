@@ -54,22 +54,61 @@ export class ProductController {
     }
   }
 
+  static async getAllProducts(req, res) {
+    try {
+      const products = await ProductModel.getAllProducts()
+
+      if (products.length === 0) {
+        return res.status(404).json({
+          message: 'No products found'
+        })
+      }
+
+      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`
+      const productsWithFullImageUrls = products.map((product) => ({
+        ...product,
+        images: product.images.map((image) => `${baseUrl}${image}`)
+      }))
+
+      res.status(200).json({
+        message: 'Products retrieved successfully',
+        data: productsWithFullImageUrls
+      })
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while retrieving products',
+        error: error.message
+      })
+    }
+  }
+
   static async getProduct(req, res) {
     try {
       const { id } = req.params
       const product = await ProductModel.getProduct(id)
 
-      if (!product || product.length === 0) {
+      if (!product) {
         return res.status(404).json({
           message: 'Product not found'
         })
       }
 
+      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`
+
+      const productWithFullImageUrls = {
+        ...product,
+        images: product.images.map(image => ({
+          id: image.id,
+          url: `${baseUrl}${image.url}`
+        }))
+      }
+
       res.status(200).json({
-        message: 'Product retrieved succesfully',
-        data: product
+        message: 'Product retrieved successfully',
+        data: productWithFullImageUrls
       })
     } catch (error) {
+      console.log(error)
       res.status(500).json({
         message: 'An error occurred while retrieving the product',
         error: error.message
@@ -140,13 +179,19 @@ export class ProductController {
 
       if (products.length === 0) {
         return res.status(404).json({
-          message: 'It was not possible to retrieved the products'
+          message: 'It was not possible to retrieve the products'
         })
       }
 
+      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`
+      const productsWithFullImageUrls = products.map((product) => ({
+        ...product,
+        images: product.images.map((image) => `${baseUrl}${image}`)
+      }))
+
       res.status(200).json({
-        message: 'Products retrieved succesfully',
-        data: products
+        message: 'Products retrieved successfully',
+        data: productsWithFullImageUrls
       })
     } catch (error) {
       res.status(500).json({
@@ -163,13 +208,19 @@ export class ProductController {
 
       if (products.length === 0) {
         return res.status(404).json({
-          message: 'It was not possible to retrieved the products'
+          message: 'It was not possible to retrieve the products'
         })
       }
 
+      const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`
+      const productsWithFullImageUrls = products.map((product) => ({
+        ...product,
+        images: product.images.map((image) => `${baseUrl}${image}`)
+      }))
+
       res.status(200).json({
-        message: 'Products retrieved succesfully',
-        data: products
+        message: 'Products retrieved successfully',
+        data: productsWithFullImageUrls
       })
     } catch (error) {
       res.status(500).json({
@@ -181,58 +232,51 @@ export class ProductController {
 
   static async updateProductImage(req, res) {
     try {
-      const { id } = req.params
+      const { id } = req.params;
 
       if (!req.file) {
         return res.status(400).json({
           message: 'No image file provided'
-        })
+        });
       }
 
-      const product = await ProductModel.getProduct(id)
-
-      if (product.length === 0) {
+      const currentImage = await ProductModel.getProductImageById(id);
+      if (!currentImage) {
         return res.status(404).json({
-          message: 'Product not found'
-        })
+          message: 'Product or image not found'
+        });
       }
 
-      const oldImageUrl = product[0].image_url
-
+      const oldImageUrl = currentImage.image_url;
       if (oldImageUrl) {
-        const oldImagePath = path.join(__customDirname, '../uploads', oldImageUrl)
+        const oldImagePath = path.join(__customDirname, '../uploads', path.basename(oldImageUrl));
         fs.unlink(oldImagePath, (err) => {
           if (err) {
-            console.error(`Failed to delete old image: ${err.message}`)
+            console.error(`Failed to delete old image: ${err.message}`);
           }
-        })
+        });
       }
 
-      const filename = Date.now() + '-' + req.file.originalname
-      const filepath = path.join(__customDirname, '../uploads', filename)
+      const filename = `${Date.now()}-${req.file.originalname}`;
+      const filepath = path.join(__customDirname, '../uploads', filename);
 
       fs.writeFile(filepath, req.file.buffer, async (err) => {
         if (err) {
           return res.status(500).json({
             message: 'Failed to save the image',
             error: err.message
-          })
+          });
         }
 
-        const imageUrl = filename
-        const updatedProduct = await ProductModel.updateImage(id, imageUrl)
-
-        if (updatedProduct.length === 0) {
-          return res.status(404).json({
-            message: 'Product not found or could not be updated'
-          })
-        }
+        // 4. Update the image URL in the database
+        const imageUrl = filename;
+        const updatedImage = await ProductModel.updateImage(id, imageUrl);
 
         res.status(200).json({
           message: 'Product image updated successfully',
-          product: updatedProduct
-        })
-      })
+          image: updatedImage
+        });
+      });
     } catch (error) {
       res.status(500).json({
         message: 'An error occurred while updating the product image',

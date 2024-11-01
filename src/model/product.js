@@ -46,19 +46,58 @@ export class ProductModel {
     }
   }
 
-  static async getProduct(id) {
+  static async getAllProducts() {
     try {
-      const [product] = await db.query(`
-        SELECT p.*, i.stock
-        FROM product p
-        LEFT JOIN inventory i ON p.id = i.product_id
-        WHERE p.id = ?
-      `, [id])
+      const [products] = await db.query('SELECT * FROM product')
 
-      if (!product || product.length === 0) {
+      if (!products || products.length === 0) {
         return []
       }
 
+      const productsWithImages = await Promise.all(
+        products.map(async (product) => {
+          const images = await this.getProductImages(product.id)
+          return {
+            ...product,
+            images
+          }
+        })
+      )
+
+      return productsWithImages
+    } catch (error) {
+      console.log(error)
+      throw new Error('Failed to retrieve products. Please try again later.')
+    }
+  }
+
+  static async getProduct(id) {
+    try {
+      const [result] = await db.query(`
+        SELECT 
+          p.*,
+          SUM(i.stock) AS stock,
+          (
+            SELECT JSON_ARRAYAGG(JSON_OBJECT('id', pi.id, 'url', pi.image_url))
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+          ) AS images,
+          (
+            SELECT JSON_ARRAYAGG(JSON_OBJECT('inventory_id', i.id, 'size_id', s.id, 'size_name', s.size_name, 'stock', i.stock))
+            FROM inventory i
+            LEFT JOIN sizes s ON i.size_id = s.id
+            WHERE i.product_id = p.id
+          ) AS sizes
+        FROM product p
+        LEFT JOIN inventory i ON p.id = i.product_id
+        WHERE p.id = ?
+        GROUP BY p.id
+      `, [id])
+
+      if (!result || result.length === 0) {
+        return null
+      }
+      const product = result[0]
       return product
     } catch (error) {
       console.log(error)
@@ -109,18 +148,26 @@ export class ProductModel {
   static async getProductsByCategory(id) {
     try {
       const category = await CategoryModel.getCategory(id)
-
       if (!category.id) {
         throw new Error('Category does not exist.')
       }
 
       const [products] = await db.query('SELECT * FROM product WHERE category_id = ?', [id])
-
       if (!products || products.length === 0) {
         return []
       }
 
-      return products
+      const productsWithImages = await Promise.all(
+        products.map(async (product) => {
+          const images = await this.getProductImages(product.id)
+          return {
+            ...product,
+            images
+          }
+        })
+      )
+
+      return productsWithImages
     } catch (error) {
       console.log(error)
       throw new Error(error.message)
@@ -130,35 +177,66 @@ export class ProductModel {
   static async getProductsByBrand(id) {
     try {
       const brand = await BrandModel.getBrand(id)
-
       if (!brand.id) {
         throw new Error('Brand does not exist.')
       }
 
-      const [products] = await db.query('SELECT * FROM product WHERE category_id = ?', [id])
-
+      const [products] = await db.query('SELECT * FROM product WHERE brand_id = ?', [id])
       if (!products || products.length === 0) {
         return []
       }
 
-      return products
+      const productsWithImages = await Promise.all(
+        products.map(async (product) => {
+          const images = await this.getProductImages(product.id)
+          return {
+            ...product,
+            images
+          }
+        })
+      )
+
+      return productsWithImages
     } catch (error) {
       console.log(error)
       throw new Error(error.message)
     }
   }
 
-  static async updateImage(id, imageUrl) {
+  static async getProductImageById(imageId) {
     try {
-      const [result] = await db.query('UPDATE product SET image_url = ? WHERE id = ?', [imageUrl, id])
+      const query = `
+        SELECT image_url
+        FROM product_images
+        WHERE id = ?
+      `;
+      const [rows] = await db.query(query, [imageId]);
+
+      return rows.length ? rows[0] : null;
+    } catch (error) {
+      throw new Error(`Error retrieving image: ${error.message}`);
+    }
+  }
+
+  static async updateImage(imageId, newImageUrl) {
+    try {
+      const query = `
+        UPDATE product_images
+        SET image_url = ?
+        WHERE id = ?
+      `;
+      const [result] = await db.query(query, [newImageUrl, imageId]);
 
       if (result.affectedRows === 0) {
-        return []
+        throw new Error('Image not found');
       }
 
-      return await this.getProduct(id)
+      return {
+        id: imageId,
+        image_url: newImageUrl
+      };
     } catch (error) {
-      throw new Error('Failed to update product image.')
+      throw new Error(`Error updating image: ${error.message}`);
     }
   }
 
@@ -171,5 +249,10 @@ export class ProductModel {
       console.log(error)
       throw new Error('Failed to search products')
     }
+  }
+
+  static async getProductImages(productId) {
+    const [images] = await db.query('SELECT image_url FROM product_images WHERE product_id = ?', [productId])
+    return images.map(img => img.image_url)
   }
 }
