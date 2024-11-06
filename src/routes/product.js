@@ -22,7 +22,7 @@ const uploadSingle = multer({
     fieldSize: 1024 * 1024 * 20,
     files: 10
   }
-}).single('images')
+}).single('image')
 
 router.post('/', uploadMultilple, ProductController.createProduct)
 router.get('/', ProductController.getAllProducts)
@@ -32,6 +32,8 @@ router.get('/category/:id', ProductController.getProductsByCategory)
 router.get('/brand/:id', ProductController.getProductsByBrand)
 router.put('/:id', ProductController.updateProduct)
 router.put('/image/:id', uploadSingle, ProductController.updateProductImage)
+router.post('/image/:id', uploadSingle, ProductController.addProductImage);
 router.delete('/:id', ProductController.deleteProduct)
+router.delete('/image/:id', ProductController.deleteProductImage);
 
 export default router

@@ -268,9 +268,10 @@ export class ProductController {
           });
         }
 
-        // 4. Update the image URL in the database
+        const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`
         const imageUrl = filename;
         const updatedImage = await ProductModel.updateImage(id, imageUrl);
+        updatedImage.url = baseUrl + updatedImage.image_url
 
         res.status(200).json({
           message: 'Product image updated successfully',
@@ -282,6 +283,74 @@ export class ProductController {
         message: 'An error occurred while updating the product image',
         error: error.message
       })
+    }
+  }
+
+  static async deleteProductImage(req, res) {
+    try {
+      const { id } = req.params;
+
+      const imageUrl = await ProductModel.deleteImage(id);
+
+      const imagePath = path.join(__customDirname, '../uploads', path.basename(imageUrl));
+
+      fs.unlink(imagePath, (err) => {
+        if (err) {
+          console.error(`Failed to delete image file: ${err.message}`);
+          return res.status(500).json({
+            message: 'Image deleted from database but failed to delete file',
+            error: err.message
+          });
+        }
+
+        res.status(200).json({
+          message: 'Image deleted successfully'
+        });
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while deleting the product image',
+        error: error.message
+      });
+    }
+  }
+
+  static async addProductImage(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: 'No image file provided'
+        });
+      }
+
+      const filename = `${Date.now()}-${req.file.originalname}`;
+      const filepath = path.join(__customDirname, '../uploads', filename);
+
+      fs.writeFile(filepath, req.file.buffer, async (err) => {
+        if (err) {
+          return res.status(500).json({
+            message: 'Failed to save the image',
+            error: err.message
+          });
+        }
+
+        const baseUrl = `${req.protocol}://${req.get('host')}/uploads/`;
+        const imageUrl = filename;
+        const newImage = await ProductModel.addImage(id, imageUrl);
+        newImage.url = baseUrl + newImage.image_url;
+
+        res.status(200).json({
+          message: 'Image added successfully',
+          image: newImage
+        });
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: 'An error occurred while adding the product image',
+        error: error.message
+      });
     }
   }
 

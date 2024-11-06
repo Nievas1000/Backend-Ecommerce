@@ -240,6 +240,56 @@ export class ProductModel {
     }
   }
 
+  static async deleteImage(imageId) {
+    try {
+      const querySelect = `
+        SELECT image_url
+        FROM product_images
+        WHERE id = ?
+      `;
+      const [imageResult] = await db.query(querySelect, [imageId]);
+
+      if (imageResult.length === 0) {
+        throw new Error('Image not found');
+      }
+
+      const queryDelete = `
+        DELETE FROM product_images
+        WHERE id = ?
+      `;
+      const [result] = await db.query(queryDelete, [imageId]);
+
+      if (result.affectedRows === 0) {
+        throw new Error('Failed to delete image from database');
+      }
+
+      return imageResult[0].image_url;
+    } catch (error) {
+      throw new Error(`Error deleting image from database: ${error.message}`);
+    }
+  }
+
+  static async addImage(productId, imageUrl) {
+    try {
+      const query = `
+        INSERT INTO product_images (product_id, image_url)
+        VALUES (?, ?)
+      `;
+      const [result] = await db.query(query, [productId, imageUrl]);
+
+      if (result.affectedRows === 0) {
+        throw new Error('Failed to add image to the database');
+      }
+
+      return {
+        id: result.insertId,
+        image_url: imageUrl
+      };
+    } catch (error) {
+      throw new Error(`Error adding image to database: ${error.message}`);
+    }
+  }
+
   static async searchProduct(query) {
     try {
       const [products] = await db.query('SELECT * FROM product WHERE title LIKE ? or description LIKE ?', [`%${query}%`, `%${query}%`])
